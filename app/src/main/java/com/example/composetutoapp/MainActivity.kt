@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Done
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Button
@@ -64,6 +65,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.composetutoapp.ui.theme.ComposeTutoAppTheme
+import kotlinx.coroutines.launch
 import kotlin.random.Random
 
 class MainActivity : ComponentActivity() {
@@ -75,13 +77,107 @@ class MainActivity : ComponentActivity() {
             //imgCardExample()
             //StylingTextExample()
             //StateExample()
-            ScaffoldExample()
-
-
-
+            //ScaffoldExample()
+            ScaffoldSnackbarExample_2()
+            
         }
     }
 }
+
+//7.2 - Example: Scaffold with a snackbar / coroutine
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ScaffoldSnackbarExample_2(){
+    val snackBarHostState = remember {SnackbarHostState()}
+    val coroutineScop = rememberCoroutineScope()
+
+    Scaffold(
+        topBar = {
+            TopAppBar(title = {Text("Scaffold TopAppBar with Snackbar")})
+        },
+        snackbarHost = { SnackbarHost(snackBarHostState) },
+        floatingActionButton = {
+            FloatingActionButton(onClick = {
+                coroutineScop.launch {
+                    snackBarHostState.showSnackbar(
+                        message = "This the snackbar we waiting",
+                        actionLabel = "Dismiss",
+                        duration = SnackbarDuration.Short
+                    )
+                }
+
+            }) {
+                Icon(Icons.Default.Done, contentDescription = "Show snackBar")
+            }
+        },
+        content = {
+                mPadding -> Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(mPadding),
+            contentAlignment = Alignment.Center
+        ) {
+            Button( onClick = {
+                coroutineScop.launch {
+                    snackBarHostState.showSnackbar(
+                        message = "This is the snackbar we waiting/Coroutine",
+                        actionLabel = "Dismiss",
+                        duration = SnackbarDuration.Short
+                    )
+                }
+            }) {
+                Text("Showing Snackbar")
+            }
+        }
+        }
+    )
+
+
+}
+
+//7.1 - Example: Scaffold with a snackbar / LauncherEffect
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ScaffoldSnackbarExample_1(){
+    val snackBarHostState = remember {SnackbarHostState()}
+    var showSnackBar by remember { mutableStateOf(false) }
+
+    Scaffold(
+        topBar = {
+            TopAppBar(title = {Text("Scaffold TopAppBar with Snackbar")})
+        },
+        snackbarHost = { SnackbarHost(snackBarHostState) },
+        floatingActionButton = {
+            FloatingActionButton(onClick = {showSnackBar = true}) {
+                Icon(Icons.Default.Done, contentDescription = "Show snackBar")
+            }
+        },
+        content = {
+            mPadding -> Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(mPadding),
+                contentAlignment = Alignment.Center
+            ) {
+               Button( onClick = { showSnackBar = true }) {
+                   Text("Showing snackbar")
+               }
+            }
+        }
+    )
+
+    if (showSnackBar){
+        LaunchedEffect(snackBarHostState) {
+            snackBarHostState.showSnackbar(
+                message = "This the snackbar we waiting",
+                actionLabel = "Dismiss",
+                duration = SnackbarDuration.Short
+            )
+            showSnackBar = false
+        }
+    }
+}
+
 
 //6 - Example: Scaffold :
 @OptIn(ExperimentalMaterial3Api::class)

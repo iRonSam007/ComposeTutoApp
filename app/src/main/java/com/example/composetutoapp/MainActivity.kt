@@ -20,12 +20,31 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Star
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarDuration
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.contentColorFor
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
@@ -50,16 +69,62 @@ import kotlin.random.Random
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
         setContent {
             //DemoColRow()
             //DemoModifiers()
             //imgCardExample()
             //StylingTextExample()
-            StateExample()
+            //StateExample()
+            ScaffoldExample()
+
+
+
         }
     }
 }
+
+//6 - Example: Scaffold :
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ScaffoldExample(){
+    //Hold the background color of TopAppBar in a MutableState
+    var appBarColor by remember {mutableStateOf(Color.Blue)}
+
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = {Text("Top App Bar by Scaffold")},
+                colors = TopAppBarDefaults.smallTopAppBarColors(
+                    containerColor = appBarColor
+                )
+            )
+        },
+        floatingActionButton = {
+            FloatingActionButton( onClick = {
+                //Toggle color on click
+                appBarColor = if (appBarColor == Color.Blue) Color.Green else Color.Red
+            }) {
+                Icon(Icons.Default.Star, contentDescription = "Changing color of TopBar")
+            }
+
+        },
+        content = { xPadding ->
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(xPadding),
+                contentAlignment = Alignment.Center
+            ){
+                Text("xContent: This scaffold can change the color of App Top Bar By clicking the Floating Action Button ")
+            }
+
+        }
+
+
+    )
+
+}
+
 
 //5 - Example: Using State, Dynamic content (UI state)
 @Composable
@@ -69,7 +134,7 @@ fun StateExample(){
         ColorBox(
             Modifier
                 .weight(1f)
-                .fillMaxSize()){ //Call of lampbda function
+                .fillMaxSize()){
             color.value = it
         }
         Box(modifier = Modifier

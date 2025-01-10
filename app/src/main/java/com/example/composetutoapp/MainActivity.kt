@@ -19,17 +19,23 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Done
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarDuration
@@ -42,6 +48,7 @@ import androidx.compose.material3.contentColorFor
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -78,11 +85,116 @@ class MainActivity : ComponentActivity() {
             //StylingTextExample()
             //StateExample()
             //ScaffoldExample()
-            ScaffoldSnackbarExample_2()
-            
+            //ScaffoldSnackbarExample_2()
+            //ListExample_1()
+            ListExample_2()
+
         }
     }
 }
+
+
+//8.2 - Example: Sophisticated example of List usage
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ListExample_2() {
+    val items = remember {mutableStateListOf("Banana", "Apple", "Dates")}
+    var selectedItem by remember { mutableStateOf<String?>(null) }
+    Scaffold(
+        topBar = {
+            TopAppBar(title = {Text("Shopping List Top Bar")})
+        },
+        content = {xPadding ->
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(xPadding)
+            ){
+                LazyColumn(
+                    modifier = Modifier.weight(1f) //Text in below at the bottom
+                ) {
+                    itemsIndexed(items){ index, item -> XListOfItems(
+                        text = item,
+                        index = index,
+                        onItemClick = { selectedItem = it },
+                        onDeleteClick = { items.removeAt(index)}
+                    )
+                    }
+                }
+                if (selectedItem != null){
+                    Text(
+                        text = "Slected item is $selectedItem",
+                        style = MaterialTheme.typography.bodyLarge,
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(16.dp)
+                    )
+                }
+            }
+        },
+        floatingActionButton = {
+            FloatingActionButton( onClick = {
+                items.add("New Item ${items.size+1}")  //To dod: Add item name getter
+            }) {
+                    Icon(Icons.Default.Add, contentDescription = "Add item")
+            }
+        }
+    )
+
+}
+
+@Composable
+fun XListOfItems(
+    text: String,
+    index: Int,
+    onItemClick: (String)->Unit,
+    onDeleteClick: () -> Unit
+){
+    Row(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(horizontal = 16.dp, vertical = 8.dp)
+            .clickable { onItemClick(text) },
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(
+            imageVector = Icons.Default.ShoppingCart,
+            contentDescription = "Item Icon",
+            modifier = Modifier
+                .size(24.dp)
+                .padding(end = 16.dp)
+        )
+        Text(
+            text = text,
+            style = MaterialTheme.typography.bodyLarge,
+            modifier = Modifier.weight(1f)
+        )
+        IconButton(onClick = onDeleteClick) {
+            Icon(Icons.Default.Delete, contentDescription = "delete item")
+        }
+    }
+}
+
+
+
+
+//8.1 - Example: Lists // RecyclerView using LazyColumn.
+@Composable
+fun ListExample_1(){
+    LazyColumn {
+        itemsIndexed( listOf("My", "List", "kinda", "replace", "Recycler", "View")) //Can accept any type of list, better than RV.
+        { index, string -> Text(
+            text = string,
+            fontSize = 24.sp,
+            fontWeight = FontWeight.Bold,
+            textAlign = TextAlign.Center,
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(vertical = 24.dp))
+        }
+    }
+}
+
 
 //7.2 - Example: Scaffold with a snackbar / coroutine
 @OptIn(ExperimentalMaterial3Api::class)
@@ -131,9 +243,8 @@ fun ScaffoldSnackbarExample_2(){
         }
         }
     )
-
-
 }
+
 
 //7.1 - Example: Scaffold with a snackbar / LauncherEffect
 @OptIn(ExperimentalMaterial3Api::class)

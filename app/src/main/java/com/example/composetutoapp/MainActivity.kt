@@ -23,6 +23,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicText
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
@@ -55,6 +56,8 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.FocusRequester.Companion.createRefs
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.Painter
@@ -71,6 +74,8 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.constraintlayout.compose.ConstraintLayout
+import androidx.constraintlayout.widget.ConstraintLayout
 import com.example.composetutoapp.ui.theme.ComposeTutoAppTheme
 import kotlinx.coroutines.launch
 import kotlin.random.Random
@@ -87,8 +92,93 @@ class MainActivity : ComponentActivity() {
             //ScaffoldExample()
             //ScaffoldSnackbarExample_2()
             //ListExample_1()
-            ListExample_2()
+            //ListExample_2()
+            //ConstraintLayoutCompose_1()
+            //ConstraintLayoutCompose_2()
 
+        }
+    }
+}
+
+
+//9.2 - Example: ConstraintLayout (Complex positioning)
+@Composable
+fun ConstraintLayoutCompose_2(){
+    ConstraintLayout(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
+    ){
+        val (title, subtitle, button) = createRefs()
+        BasicText(
+            text = "title",
+            modifier = Modifier
+                .constrainAs(title){
+                    top.linkTo(parent.top, margin = 32.dp)
+                    start.linkTo(parent.start)
+                    end.linkTo(parent.end)
+                },
+            style = TextStyle(
+                fontSize = 24.sp,
+                color = Color.Black,
+                textAlign = TextAlign.Center
+            )
+        )
+
+        BasicText(
+            text = "This is the subtitle",
+            modifier = Modifier
+                .constrainAs(subtitle){
+                    top.linkTo(title.bottom, margin = 16.dp)
+                    start.linkTo(parent.start)
+                    end.linkTo(parent.end)
+                },
+            style = TextStyle(
+                fontSize = 16.sp,
+                color = Color.Green,
+                textAlign = TextAlign.Center
+            )
+        )
+
+        Button(
+            onClick = {},
+            modifier = Modifier
+                .constrainAs(button){
+                    top.linkTo(subtitle.bottom, margin = 32.dp)
+                    start.linkTo(parent.start)
+                    end.linkTo(parent.end)
+                }
+        ) {
+            Text("Click Here Sam")
+        }
+    }
+}
+
+//9.1 - Example: ConstraintLayout
+@Composable
+fun ConstraintLayoutCompose_1(){
+    ConstraintLayout(
+        modifier = Modifier.fillMaxSize()
+    ) {
+        val (title, button) = createRefs() //Each composable under CL shall have a ref and constraints Modifier shall apply on him
+
+        Text(
+            text = "Hello, IronSam from constraint layout",
+            modifier = Modifier.constrainAs(title){
+                top.linkTo(parent.top, margin = 32.dp)
+                start.linkTo(parent.start)
+                end.linkTo(parent.end)
+            }
+        )
+        Button(
+            onClick = {},
+            modifier = Modifier.constrainAs(button){
+                bottom.linkTo(parent.bottom, margin = 32.dp)
+                start.linkTo(parent.start)
+                end.linkTo(parent.end)
+            }
+        ) {
+            Text("click Here")
         }
     }
 }
@@ -178,7 +268,7 @@ fun XListOfItems(
 
 
 
-//8.1 - Example: Lists // RecyclerView using LazyColumn.
+//8.1 - Example: Lists // Eq to RecyclerView using LazyColumn.
 @Composable
 fun ListExample_1(){
     LazyColumn {

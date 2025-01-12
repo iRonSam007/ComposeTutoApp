@@ -1,6 +1,9 @@
 package com.example.composetutoapp
 
+import android.content.Context
 import android.os.Bundle
+import android.util.Log
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -24,6 +27,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicText
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
@@ -47,7 +51,10 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.contentColorFor
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -62,6 +69,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
@@ -77,6 +85,10 @@ import androidx.compose.ui.unit.sp
 import androidx.constraintlayout.compose.ConstraintLayout
 import androidx.constraintlayout.widget.ConstraintLayout
 import com.example.composetutoapp.ui.theme.ComposeTutoAppTheme
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlin.random.Random
 
@@ -95,10 +107,133 @@ class MainActivity : ComponentActivity() {
             //ListExample_2()
             //ConstraintLayoutCompose_1()
             //ConstraintLayoutCompose_2()
+            EffectHandlers()
 
         }
     }
 }
+
+
+
+
+
+
+//10.2 - Effect Handlers: Sophisticated Example{ SideEffect, LaunchedEffect, DisposableEffect}
+@Composable
+fun EffectHandlers(){
+    val context = LocalContext.current
+    LoginPage { outputMessage -> Toast.makeText(context, outputMessage, Toast.LENGTH_SHORT).show() }
+}
+
+@Composable
+fun LoginPage(toaster: (String) -> Unit ){
+    val username = remember { mutableStateOf("") }
+    val loginStatus = remember { mutableStateOf("Waiting for input") }
+    val timerPointer = remember {mutableStateOf(0)}
+    val countRecompo = remember { mutableStateOf(0) }
+
+    //count how many successful recomposition were done
+
+    SideEffect {
+        countRecompo.value +=1
+        //toaster("Login screen recomposed: ${countRecompo.value}")
+    }
+
+    LaunchedEffect(Unit){
+        delay(2000) // Simulate saved credential loading
+        loginStatus.value = "First recomposition started, Getting ready for login"
+    }
+
+    //Calculate the time Login screen stayed
+    DisposableEffect(Unit) {
+        val timerJob = TimerUpdate(timerPointer)
+        onDispose {
+            timerJob.cancel()
+            Log.d("DisposableEffectLog", "Login screen exited, timer stopped, timer was pointing to: ${timerPointer.value}")
+            Log.d("DisposableEffectLog", "Recomposed ${countRecompo.value}")
+
+        }
+    }
+
+
+    Column(
+        Modifier
+            .fillMaxSize()
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        Text("Login Status: ${loginStatus.value}")
+        Text("Time on screen: ${timerPointer.value} seconds")
+
+        BasicTextField(
+            value = username.value,
+            onValueChange = { username.value = it },
+            modifier = Modifier.fillMaxWidth(),
+            singleLine = true
+        )
+
+        Button(onClick = {
+            if (username.value.isNotEmpty()) {
+                loginStatus.value = "Logged in as ${username.value}"
+            } else {
+                loginStatus.value = "Please enter a username"
+            }
+        }) {
+            Text("Click Login")
+        }
+    }
+}
+fun TimerUpdate(tPointer: MutableState<Int>): Job{
+    val job =  Job() // for explicit control over coroutine lifecycle
+    CoroutineScope(job).launch {
+        while(isActive){
+            delay(1000)
+            tPointer.value += 1
+        }
+    }
+    return job
+}
+
+
+//10.1.3 - Effect Handlers: LaunchedEffect
+@Composable
+fun LaunchedEffectUpdate(es: MutableState<String>, key: Int){ //needless param imho
+    //When key change or Composable enters composition,
+    //Execute suspend tasks(or coroutines but tied to the composition lifecycle)
+    LaunchedEffect(key1 = key) {
+        delay(1000)
+        es.value = "Update with key: $key"
+    }
+    Text(text = "LauncherEffect example: ${es.value}")
+}
+//10.1.2 - Effect Handlers: SideEffect
+@Composable
+fun SideEffectUpdate(externalState: MutableState<String>){
+    val recompositionCount = remember {mutableStateOf(0)}
+    recompositionCount.value++
+
+    //Execute non-suspending (tasks)side effect after a successful recomposition (of the composable called within)
+    SideEffect {
+        externalState.value = "Recomposed ${recompositionCount.value} times"
+    }
+    Text(text = "SideEffect example: ${recompositionCount.value}")
+
+}
+//10.1.1 - Effect Handlers: DisposableEffect
+@Composable
+fun DisposableEffectUpdate(es: MutableState<String>, dependency: Int){
+    //Used for side effects that requires clean-up: starting/stopping observers, listeners..
+    DisposableEffect(dependency) {
+        es.value = "Effect started with dependency: $dependency"
+        onDispose {
+            es.value ="Effect clean up for $dependency"
+        }
+    }
+    Text(text = "DisposableEffect example: ${es.value}")
+
+}
+
+
 
 
 //9.2 - Example: ConstraintLayout (Complex positioning)

@@ -7,6 +7,7 @@ import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -37,11 +38,13 @@ import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ProgressIndicatorDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
@@ -107,15 +110,60 @@ class MainActivity : ComponentActivity() {
             //ListExample_2()
             //ConstraintLayoutCompose_1()
             //ConstraintLayoutCompose_2()
-            EffectHandlers()
+            //EffectHandlers()
+            Animated_CircularProgressBar()
 
         }
     }
 }
 
 
+//11 - Animation: 
+@Composable
+fun Animated_CircularProgressBar(){
+    // Progress state (0.0f to 1.0f)
+    var progress by remember {mutableStateOf(0.0f)}
 
+    // Animate progress changes
+    val animatedProgress by animateFloatAsState(
+        targetValue = progress,
+        animationSpec  = ProgressIndicatorDefaults.ProgressAnimationSpec
+    )
 
+    //UI
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ){
+        CircularProgressIndicator(
+            progress =  animatedProgress,
+            modifier = Modifier.size(150.dp),
+            strokeWidth = 12.dp,
+            color = MaterialTheme.colorScheme.primary
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+
+        //Display progress value
+        Text(
+            text = "Progress is ${(progress*100).toInt()}%",
+            //fontSize = 24.dp,
+            //fontWeight = FontWeight.Bold,
+            //color = MaterialTheme.colorScheme.primary
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+        Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+            Button(onClick  ={ if(progress > 0) progress -=0.1f}) {
+                Text("Decrease")
+            }
+            Button(onClick = { if(progress < 1.0f ) progress +=0.1f }) {
+                Text("Increase")
+            }
+        }
+    }
+}
 
 
 //10.2 - Effect Handlers: Sophisticated Example{ SideEffect, LaunchedEffect, DisposableEffect}

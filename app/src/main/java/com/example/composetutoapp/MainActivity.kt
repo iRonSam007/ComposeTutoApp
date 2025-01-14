@@ -8,6 +8,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -68,8 +69,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.FocusRequester.Companion.createRefs
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -111,14 +116,80 @@ class MainActivity : ComponentActivity() {
             //ConstraintLayoutCompose_1()
             //ConstraintLayoutCompose_2()
             //EffectHandlers()
-            Animated_CircularProgressBar()
-
+            //Animated_CircularProgressBar()
+            Animated_CircularProgressBarCanva()
         }
     }
 }
+//11.1 - Animation CPB Using Canvas
+@Composable
+fun Animated_CircularProgressBarCanva(){
+    // progress 0.0f to 1.0f
+    var progress by remember { mutableStateOf(0.0f) }
 
+    // Animate progress for smooth update
+    val animatedProgress by animateFloatAsState(
+        targetValue = progress,
+        animationSpec = ProgressIndicatorDefaults.ProgressAnimationSpec
+    )
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ){
+        Box(modifier = Modifier.size(200.dp)){
+            Canvas(modifier = Modifier.fillMaxSize()) {
+                //Canvas dimensions
+                val canvaSize = size.minDimension
+                val strokeWith = 12.dp.toPx()
 
-//11 - Animation: 
+                //draw background circle
+                drawCircle(
+                    color = Color.LightGray,
+                    radius = canvaSize/2 - strokeWith/2,
+                    center = center,
+                    style = Stroke(width = strokeWith)
+                )
+
+                //draw progress arc
+                drawArc(
+                    color = Color(0xFF6200EE),
+                    startAngle = 90f,                      // Start at the top
+                    sweepAngle = animatedProgress * 360f,   // progress angle
+                    useCenter = false,
+                    style = Stroke(
+                        width = strokeWith,
+                        cap = StrokeCap.Round               // Rounded end
+                    ),
+                    topLeft = Offset(
+                        x = strokeWith / 2,
+                        y = strokeWith / 2
+                    ),
+                    size = Size(
+                        width = canvaSize - strokeWith,
+                        height = canvaSize - strokeWith
+                    )
+                )
+            }
+
+        }
+        Spacer(modifier = Modifier.height(16.dp))
+        Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
+            Button(onClick  = { if(progress > 0) progress -=0.1f}, enabled = progress >0)
+            {
+                Text("Decrease")
+            }
+            Button(onClick = { if(progress < 1.0f ) progress +=0.1f }, enabled = progress < 1) {
+                Text("Increase")
+            }
+        }
+
+    }
+}
+
+//11.1 - Animation: ProgressBar
 @Composable
 fun Animated_CircularProgressBar(){
     // Progress state (0.0f to 1.0f)

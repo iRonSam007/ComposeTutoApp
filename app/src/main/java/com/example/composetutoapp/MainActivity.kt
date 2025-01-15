@@ -7,7 +7,18 @@ import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -117,11 +128,116 @@ class MainActivity : ComponentActivity() {
             //ConstraintLayoutCompose_2()
             //EffectHandlers()
             //Animated_CircularProgressBar()
-            Animated_CircularProgressBarCanva()
+            //Animated_CircularProgressBarCanva()
+            Animated_ExpandedCard()
         }
     }
 }
-//11.1 - Animation CPB Using Canvas
+
+//11.3 - Animation: State-driven, visibility, transition, infinite animation, Physics-based(Spring bounce)
+@Composable
+fun Animated_ExpandedCard(){
+    // State for Card expansion
+    var isCardExpanded by remember {mutableStateOf(false)}
+
+    // State for progress
+    var progress by remember { mutableStateOf(0.0f) }
+
+    // Infinite pulse animation
+    val infiniteTransition = rememberInfiniteTransition()
+    val pulseScale by infiniteTransition.animateFloat(
+        initialValue = 1f,
+        targetValue = 1.2f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(1000),
+            repeatMode = RepeatMode.Reverse
+        )
+    )
+
+    // Animating size for Card expansion
+    val cardHeight by animateDpAsState(
+        targetValue = if (isCardExpanded) 300.dp else 100.dp,
+        animationSpec = spring(dampingRatio = Spring.DampingRatioHighBouncy) // Try with medium
+    )
+
+    // Progress update animation's scope
+    val coroutineScope = rememberCoroutineScope()
+
+    //UI
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
+        contentAlignment = Alignment.Center
+    ){
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier
+                .size(width = 300.dp , height = cardHeight)
+                .background(MaterialTheme.colorScheme.primaryContainer, RoundedCornerShape(17.dp))
+                .padding(16.dp)
+                .clickable {
+                    isCardExpanded = !isCardExpanded
+                    if(isCardExpanded){
+                        coroutineScope.launch {
+                            //When is expanded, it will display progress
+                            for(i in 1..100){
+                                delay(50)
+                                progress = i/100f
+                            }
+                        }
+                    }
+                }
+        ){
+            // Visibility when card is collapsed
+            AnimatedVisibility(visible = !isCardExpanded){
+                Text(
+                    text = "Expand by tapping",
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                )
+            }
+
+            // Visibility when card is expanded
+            AnimatedVisibility(visible = isCardExpanded, enter = fadeIn(), exit = fadeOut()){
+                Column(
+                    modifier = Modifier.fillMaxSize(),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ){
+                    CircularProgressIndicator(
+                        progress = progress,
+                        modifier = Modifier.size(100.dp),
+                        color = MaterialTheme.colorScheme.onPrimaryContainer,
+                        strokeWidth = 8.dp
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+
+                    Box(
+                        modifier = Modifier
+                            .size(50.dp * pulseScale)
+                            .background(Color.White.copy(alpha = 0.3f), RoundedCornerShape(50))
+                            .padding(),
+                        contentAlignment = Alignment.Center
+                    ){
+                        Text(
+                            text = "Progress is ${(progress * 100).toInt()}%",
+                            fontSize = 20.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                        )
+                    }
+                }
+
+            }
+        }
+
+    }
+}
+
+
+
+//11.2 - Animation CPB Using Canvas
 @Composable
 fun Animated_CircularProgressBarCanva(){
     // progress 0.0f to 1.0f

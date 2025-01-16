@@ -137,6 +137,9 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.constraintlayout.compose.ConstraintLayout
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -164,12 +167,69 @@ class MainActivity : ComponentActivity() {
             //Animated_CircularProgressBarCanvas()
             //Animated_ExpandedCard()
             //LazyGridExample()
-            MultiSelectLazyColumn()
+            //MultiSelectLazyColumn()
+            NavigationManager()
+
         }
     }
 }
 
-// Multi select lazy column
+//12.1 - Navigation between two screens
+@Composable
+fun NavigationManager(){
+    val navController = rememberNavController()
+
+    Scaffold { xPadding ->
+        NavHost(                            // Defines the navigation graph
+            navController = navController,
+            startDestination = "home",
+            modifier = Modifier.padding(xPadding)
+        ) {
+            // Home screen
+            composable("home") {
+                HomeScreen(onNavigationToDetails = { navController.navigate("details")})
+            }
+            // Details Screen
+            composable("details") {
+                DetailsScreen(onNavigationToHomeScreen = { navController.navigate("home")})
+            }
+        }
+    }
+}
+
+@Composable
+fun HomeScreen(onNavigationToDetails: () -> Unit){
+    Column(
+        modifier = Modifier.fillMaxSize(),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ){
+        Text("Home Screen")
+        Spacer(modifier = Modifier.height(16.dp))
+        Button(onClick = onNavigationToDetails ) {
+            Text("Switch to DetailsScreen")
+        }
+    }
+}
+
+@Composable
+fun DetailsScreen(onNavigationToHomeScreen: () -> Unit){
+    Column(
+        modifier = Modifier.fillMaxSize(),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ){
+        Text("Details Screen")
+        Spacer(modifier = Modifier.height(16.dp))
+        Button(onClick = onNavigationToHomeScreen) {
+            Text("Switch to HomeScreen")
+        }
+    }
+
+}
+
+
+//11.5 Multi select lazy column
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun MultiSelectLazyColumn() {
@@ -226,7 +286,7 @@ fun ColumnRowContent(item: String, isSelected: Boolean, onSelectChange: (Boolean
 }
 
 
-// Lazy Grid
+//11.4 Lazy Grid
 @Composable
 fun LazyGridExample() {
     val items = List(100) { "Prod $it" }

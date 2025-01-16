@@ -25,6 +25,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -35,6 +36,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.absoluteOffset
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
@@ -131,6 +133,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.constraintlayout.compose.ConstraintLayout
@@ -160,9 +163,65 @@ class MainActivity : ComponentActivity() {
             //Animated_CircularProgressBar()
             //Animated_CircularProgressBarCanvas()
             //Animated_ExpandedCard()
-            LazyGridExample()
-
+            //LazyGridExample()
+            MultiSelectLazyColumn()
         }
+    }
+}
+
+// Multi select lazy column
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+fun MultiSelectLazyColumn() {
+    val items = List(100) { "Product $it" }
+    val selectedItems = remember { mutableStateListOf<String>() }
+
+    LazyColumn(modifier = Modifier.padding(16.dp).fillMaxSize()) {
+        stickyHeader {
+            Text(
+                text = "Selected Items: ${selectedItems.size}",
+                style = MaterialTheme.typography.bodyLarge,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(MaterialTheme.colorScheme.surface)
+                    .padding(8.dp)
+            )
+        }
+
+        items(items){item ->
+            ColumnRowContent(
+                item = item,
+                isSelected = selectedItems.contains(item),
+                onSelectChange = { isSelected ->
+                    if (isSelected) selectedItems.add(item) else selectedItems.remove(item)
+                }
+            )
+        }
+    }
+}
+
+@Composable
+fun ColumnRowContent(item: String, isSelected: Boolean, onSelectChange: (Boolean) -> Unit){
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween,
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(8.dp)
+            .clickable {
+                onSelectChange(!isSelected)
+            }
+    ) {
+        val icon: ImageVector = if(isSelected) Icons.Default.Check else Icons.Default.Add
+        Text(text = item, modifier = Modifier.weight(1f))
+        Icon(
+            imageVector = icon,
+            contentDescription = if(isSelected) "Selected" else "Not selected",
+            tint = if(isSelected) MaterialTheme.colorScheme.primary else Color.Gray,
+            modifier = Modifier
+                .absoluteOffset()
+                .size(24.dp)
+        )
     }
 }
 

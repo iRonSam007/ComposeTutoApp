@@ -69,6 +69,7 @@ import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Badge
@@ -113,6 +114,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
@@ -137,8 +139,10 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.constraintlayout.compose.ConstraintLayout
+import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
@@ -168,8 +172,85 @@ class MainActivity : ComponentActivity() {
             //Animated_ExpandedCard()
             //LazyGridExample()
             //MultiSelectLazyColumn()
-            NavigationManager()
+            //NavigationManager()
+            ApplicationNavGraph()
 
+        }
+    }
+}
+
+//12.2 - Navigation/ Splash Screen
+@Composable
+fun ApplicationNavGraph(){
+    val navController = rememberNavController()
+
+    NavHost(
+        navController = navController,
+        startDestination = "splash"
+    ) {
+        composable("splash"){
+            SplashScreen(navController)
+        }
+        composable("home") {
+            HomeScreenSplash()
+        }
+    }
+}
+@Composable
+fun HomeScreenSplash(){
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
+    ){
+        Text("Zelcome to Home Screen")
+
+    }
+}
+@Composable
+fun SplashScreen(navController: NavController){
+    //Animating the logo scaling
+    val scale = remember {Animatable(0f)}
+
+    //Trigger the animation when the composable is displayed
+    LaunchedEffect(Unit) {
+        scale.animateTo(
+            targetValue = 1f,
+            animationSpec = tween(
+                durationMillis = 1000,
+                easing = FastOutSlowInEasing
+            )
+        )
+        //delay to show the splash screen:
+        delay(2000)
+        navController.navigate("home"){
+            //clear the splash screen from the back stack:
+            popUpTo("splash"){inclusive = true}
+        }
+    }
+
+    //UI of the splash screen:
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
+    ){
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ){
+            Image(
+                painter = painterResource(id = R.drawable.iron_man),
+                contentDescription = "App logo",
+                modifier = Modifier
+                    .size(150.dp)
+                    .scale(scale.value)
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+            Text(
+                text = "My beautiful app",
+                fontSize = 24.sp,
+                fontWeight = FontWeight.Bold,
+                textAlign = TextAlign.Center,
+            )
         }
     }
 }
@@ -180,16 +261,16 @@ fun NavigationManager(){
     val navController = rememberNavController()
 
     Scaffold { xPadding ->
-        NavHost(                            // Defines the navigation graph
+        NavHost(                            // 1 - Defines the navigation graph
             navController = navController,
             startDestination = "home",
             modifier = Modifier.padding(xPadding)
-        ) {
-            // Home screen
+        ) {// 2 - Host composables of each root
+            // home route composable
             composable("home") {
                 HomeScreen(onNavigationToDetails = { navController.navigate("details")})
             }
-            // Details Screen
+            // details route composable
             composable("details") {
                 DetailsScreen(onNavigationToHomeScreen = { navController.navigate("home")})
             }

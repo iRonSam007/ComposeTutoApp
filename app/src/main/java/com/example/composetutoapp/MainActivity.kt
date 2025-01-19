@@ -115,6 +115,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.focus.focusModifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
@@ -140,6 +141,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.constraintlayout.compose.ConstraintLayout
 import androidx.navigation.NavController
+import androidx.navigation.NavHost
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -173,10 +175,91 @@ class MainActivity : ComponentActivity() {
             //LazyGridExample()
             //MultiSelectLazyColumn()
             //NavigationManager()
-            ApplicationNavGraph()
+            //ApplicationNavGraph()
+            BottomNavigationBarWithBadges()
 
         }
     }
+}
+
+//12.3 - Bottom navigation with badges
+@Composable
+fun BottomNavigationBarWithBadges(){
+    val navController = rememberNavController()
+    val items = listOf(
+        BottomNavItem.Home,
+        BottomNavItem.Notifications,
+        BottomNavItem.Profile,
+        )
+
+    Scaffold(
+        bottomBar = { BottomNavigationBar(navController = navController, items = items) }
+    ) { xPadding ->
+        NavHost(
+            navController = navController,
+            startDestination = BottomNavItem.Home.route,
+            modifier = Modifier.padding(xPadding)
+        ){
+            composable(BottomNavItem.Home.route) { HomeScreenBN() }
+            composable(BottomNavItem.Notifications.route) { NotificationsScreen()  }
+            composable(BottomNavItem.Profile.route) { ProfileScreen() }
+        }
+    }
+}
+@Composable
+fun BottomNavigationBar(navController: NavController, items: List<BottomNavItem>){
+    NavigationBar {
+        val currentRoute = navController.currentBackStackEntry?.destination?.route
+        items.forEach{ item ->
+            val isSelected = currentRoute ==item.route
+
+            NavigationBarItem(
+                selected = isSelected,
+                onClick = {
+                    navController.navigate(item.route){
+                        popUpTo(navController.graph.startDestinationId){saveState = true}
+                        launchSingleTop = true
+                        restoreState = true
+                    }
+                },
+                icon = {
+                    if (item.badgeCount > 0 ){
+                        BadgedBox(badge = {Badge { Text("${item.badgeCount}") }}) {
+                            Icon(imageVector = item.icon, contentDescription = item.title)
+                        }
+                    } else {
+                        Icon(imageVector = item.icon, contentDescription = item.title)
+                    }
+                },
+                label = {Text(item.title)}
+            )
+        }
+    }
+}
+@Composable
+fun HomeScreenBN(){
+    Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
+        Text(text = "Home Screen", style = MaterialTheme.typography.headlineMedium)
+    }
+}
+@Composable
+fun NotificationsScreen(){
+    Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
+        Text(text = "Notifications Screen")
+    }
+}
+@Composable
+fun ProfileScreen(){
+    Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()){
+        Text(text = "Profile screen")
+    }
+
+}
+
+sealed class BottomNavItem(val title: String, val icon: ImageVector, val route: String, val badgeCount: Int = 0){
+    object Home: BottomNavItem("Home", Icons.Default.Home, "home" )
+    object Notifications : BottomNavItem("Notifications", Icons.Default.Notifications, "notifications", badgeCount = 5)
+    object Profile : BottomNavItem("Profile", Icons.Default.Person, "profile")
 }
 
 //12.2 - Navigation/ Splash Screen

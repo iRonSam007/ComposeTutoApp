@@ -2,6 +2,7 @@ package com.example.composetutoapp
 
 import android.Manifest.permission.CAMERA
 import android.content.Context
+import android.graphics.Paint.Align
 import android.os.Bundle
 import android.util.Log
 import android.widget.Toast
@@ -100,6 +101,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.rememberDrawerState
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -128,10 +130,12 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.font.FontVariation
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
@@ -176,11 +180,130 @@ class MainActivity : ComponentActivity() {
             //MultiSelectLazyColumn()
             //NavigationManager()
             //ApplicationNavGraph()
-            BottomNavigationBarWithBadges()
-
+            //BottomNavigationBarWithBadges()
+            DrawerNavigation()
         }
     }
 }
+
+//12.4 - Drawer Navigation
+@Composable
+fun DrawerNavigation(){
+    val navController = rememberNavController()
+    val drawerState = rememberDrawerState(DrawerValue.Closed)
+    val scope = rememberCoroutineScope()
+
+    ModalNavigationDrawer(
+        drawerState = drawerState,
+        drawerContent = {
+            DrawerContent(
+                onDestinationClicked = { route ->
+                    scope.launch { drawerState.close() } //Close Drawer on Selection
+                    navController.navigate(route){
+                        popUpTo(navController.graph.startDestinationId) {
+                            saveState = true
+                        }
+                        launchSingleTop = true
+                        restoreState = true
+                    }
+                }
+
+            )
+        }
+    ) {
+        NavHost(
+            navController = navController,
+            startDestination = "home"
+        ){
+            composable("home") { HomeScreenDN(scope, drawerState)  }
+            composable("settings"){ SettingsScreenDN(scope, drawerState) }
+            composable("profile"){ ProfileScreenDN(scope, drawerState) }
+        }
+    }
+}
+
+@Composable
+fun DrawerContent(onDestinationClicked: (String) -> Unit){
+    Column(
+        modifier = Modifier.fillMaxSize()
+            .padding(16.dp)
+    ){
+        Text(
+            text = "Navigation Drawer",
+            modifier = Modifier.padding(16.dp),
+            style = MaterialTheme.typography.headlineMedium
+        )
+        Divider()
+        Spacer(modifier = Modifier.height(8.dp))
+        DrawerItem(title = "Home", route = "home", onClick = onDestinationClicked)
+        DrawerItem(title = "Profile", route = "profile", onClick = onDestinationClicked)
+        DrawerItem(title = "Settings", route = "settings", onClick = onDestinationClicked)
+    }
+}
+
+@Composable
+fun DrawerItem(title: String, route: String, onClick: (String) -> Unit){
+    ClickableText(
+        text = AnnotatedString(title),
+        onClick = { onClick(route) },
+        modifier = Modifier.padding(8.dp)
+    )
+}
+
+@Composable
+fun HomeScreenDN(scope: CoroutineScope, drawerState: DrawerState){
+    ContentScreenDN(
+        scope = scope,
+        drawerState = drawerState,
+        title = "Home Screen"
+    )
+}
+
+@Composable
+fun ProfileScreenDN(scope: CoroutineScope, drawerState: DrawerState){
+    ContentScreenDN(
+        scope = scope,
+        drawerState = drawerState,
+        title = "Profile Screen"
+    )
+}
+
+@Composable
+fun SettingsScreenDN(scope: CoroutineScope, drawerState: DrawerState){
+    ContentScreenDN(
+        scope = scope,
+        drawerState = drawerState,
+        title = "Settings Screen"
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ContentScreenDN(scope: CoroutineScope, drawerState: DrawerState, title: String){
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = {Text(title)},
+                navigationIcon = {
+                    IconButton(onClick = {scope.launch { drawerState.open() }}) {
+                        Icon(Icons.Default.Menu, contentDescription = "Menu")
+                    }
+                }
+            )
+        }
+    ){
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(it),
+            contentAlignment = Alignment.Center
+        ){
+            Text(text = title, style = MaterialTheme.typography.headlineLarge)
+        }
+    }
+}
+
+
 
 //12.3 - Bottom navigation with badges
 @Composable
@@ -236,6 +359,13 @@ fun BottomNavigationBar(navController: NavController, items: List<BottomNavItem>
         }
     }
 }
+
+sealed class BottomNavItem(val title: String, val icon: ImageVector, val route: String, val badgeCount: Int = 0){
+    object Home: BottomNavItem("Home", Icons.Default.Home, "home" )
+    object Notifications : BottomNavItem("Notifications", Icons.Default.Notifications, "notifications", badgeCount = 5)
+    object Profile : BottomNavItem("Profile", Icons.Default.Person, "profile")
+}
+
 @Composable
 fun HomeScreenBN(){
     Box(contentAlignment = Alignment.Center, modifier = Modifier.fillMaxSize()) {
@@ -256,11 +386,9 @@ fun ProfileScreen(){
 
 }
 
-sealed class BottomNavItem(val title: String, val icon: ImageVector, val route: String, val badgeCount: Int = 0){
-    object Home: BottomNavItem("Home", Icons.Default.Home, "home" )
-    object Notifications : BottomNavItem("Notifications", Icons.Default.Notifications, "notifications", badgeCount = 5)
-    object Profile : BottomNavItem("Profile", Icons.Default.Person, "profile")
-}
+
+
+
 
 //12.2 - Navigation/ Splash Screen
 @Composable
@@ -400,7 +528,9 @@ fun MultiSelectLazyColumn() {
     val items = List(100) { "Product $it" }
     val selectedItems = remember { mutableStateListOf<String>() }
 
-    LazyColumn(modifier = Modifier.padding(16.dp).fillMaxSize()) {
+    LazyColumn(modifier = Modifier
+        .padding(16.dp)
+        .fillMaxSize()) {
         stickyHeader {
             Text(
                 text = "Selected Items: ${selectedItems.size}",
@@ -457,7 +587,9 @@ fun LazyGridExample() {
 
     LazyVerticalGrid(
         columns = GridCells.Fixed(4),
-        modifier = Modifier.fillMaxSize().padding(8.dp),
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(8.dp),
         state = rememberLazyGridState(),
         contentPadding = PaddingValues(8.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -534,17 +666,17 @@ fun Animated_ExpandedCard(){
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             modifier = Modifier
-                .size(width = 300.dp , height = cardHeight)
+                .size(width = 300.dp, height = cardHeight)
                 .background(MaterialTheme.colorScheme.primaryContainer, RoundedCornerShape(17.dp))
                 .padding(16.dp)
                 .clickable {
                     isCardExpanded = !isCardExpanded
-                    if(isCardExpanded){
+                    if (isCardExpanded) {
                         coroutineScope.launch {
                             //When is expanded, it will display progress
-                            for(i in 1..100){
+                            for (i in 1..100) {
                                 delay(50)
-                                progress = i/100f
+                                progress = i / 100f
                             }
                         }
                     }

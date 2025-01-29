@@ -181,10 +181,79 @@ class MainActivity : ComponentActivity() {
             //NavigationManager()
             //ApplicationNavGraph()
             //BottomNavigationBarWithBadges()
-            DrawerNavigation()
+            //DrawerNavigation()
+            BottomSheetExample()
         }
     }
 }
+
+//12.5 - Bottom sheet: button show works:
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun BottomSheetExample() {
+    // Bottom sheet state
+    val sheetState = rememberModalBottomSheetState(
+        skipPartiallyExpanded = true // Skips partially expanded state
+    )
+    val scope = rememberCoroutineScope()
+
+    // Scaffold with main content
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Bottom Sheet Example") }
+            )
+        },
+        content = { padding ->
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(padding),
+                contentAlignment = Alignment.Center
+            ) {
+                Button(onClick = { scope.launch { sheetState.show() } }) {
+                    Text("Show Bottom Sheet")
+                }
+            }
+        }
+    )
+
+    // Modal Bottom Sheet
+    if (sheetState.isVisible) {
+        ModalBottomSheet(
+            onDismissRequest = { scope.launch { sheetState.hide() } },
+            sheetState = sheetState
+        ) {
+            BottomSheetContent(
+                onItemSelected = { selectedItem ->
+                    scope.launch { sheetState.hide() }
+                    // Handle selected item
+                }
+            )
+        }
+    }
+}
+
+@Composable
+fun BottomSheetContent(onItemSelected: (String) -> Unit) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        Text("Choose an option", style = MaterialTheme.typography.headlineSmall)
+        Divider()
+        listOf("Option 1", "Option 2", "Option 3").forEach { option ->
+            TextButton(onClick = { onItemSelected(option) }) {
+                Text(option)
+            }
+        }
+    }
+}
+
+
+
 
 //12.4 - Drawer Navigation
 @Composable

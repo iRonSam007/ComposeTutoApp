@@ -182,8 +182,51 @@ class MainActivity : ComponentActivity() {
             //ApplicationNavGraph()
             //BottomNavigationBarWithBadges()
             //DrawerNavigation()
-            BottomSheetExample()
+            //BottomSheetExample()
+            ParallaxScrollExample()
         }
+    }
+}
+
+//12.6 - Multi layer parallax scroll// Adjusting speed of different layer with modifiers
+//In General: Parallax effect can be done by manipulating Modifier.offset() or Modifier.graphicsLayer()
+@Composable
+fun ParallaxScrollExample() {
+    val scrollState = rememberLazyListState()
+
+    // Calculate the offset for parallax effect based on scroll position
+    val backgroundOffset = remember { mutableStateOf(0f) }
+    val foregroundOffset = remember { mutableStateOf(0f) }
+
+    LazyColumn(state = scrollState) {
+        item {
+            // Background layer - Moves slowly
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(300.dp)
+                    .graphicsLayer {
+                        translationY = backgroundOffset.value
+                    }
+                    .background(Color.Gray)
+            )
+        }
+        items(50) {
+            // Main content
+            Text(
+                text = "Item #$it",
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp)
+            )
+        }
+    }
+
+    // Update the offset values based on scroll position
+    LaunchedEffect(scrollState.firstVisibleItemIndex) {
+        val firstVisibleItemScroll = scrollState.layoutInfo.visibleItemsInfo.firstOrNull()?.offset ?: 0
+        backgroundOffset.value = -firstVisibleItemScroll * 0.1f  // Background moves slower
+        foregroundOffset.value = -firstVisibleItemScroll * 0.5f  // Foreground moves faster
     }
 }
 
@@ -251,7 +294,6 @@ fun BottomSheetContent(onItemSelected: (String) -> Unit) {
         }
     }
 }
-
 
 
 

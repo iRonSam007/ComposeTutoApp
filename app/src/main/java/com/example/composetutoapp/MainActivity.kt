@@ -144,12 +144,22 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.constraintlayout.compose.ConstraintLayout
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.NavHost
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.paging.LoadState
+import androidx.paging.Pager
+import androidx.paging.PagingConfig
+import androidx.paging.PagingSource
+import androidx.paging.PagingState
+import androidx.paging.cachedIn
+import androidx.paging.compose.collectAsLazyPagingItems
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -183,10 +193,98 @@ class MainActivity : ComponentActivity() {
             //BottomNavigationBarWithBadges()
             //DrawerNavigation()
             //BottomSheetExample()
-            ParallaxScrollExample()
+            //ParallaxScrollExample()
+            //SimplePagination()
+
+            PaginatedList()
+
         }
     }
 }
+
+//13.2 - Pagination // Using Paging 3 Library
+//First - Paging source
+class ItemPagingSource: PagingSource<Int, String>(){
+    override fun getRefreshKey(state: PagingState<Int, String>): Int? = state.anchorPosition
+
+    override suspend fun load(params: LoadParams<Int>): LoadResult<Int, String> {
+        val page = params.key ?:1
+        return try {
+            val items = (1..20).map{"Item ${((page -1 ) * 20)+ it}"}
+            LoadResult.Page(
+                data = items,
+                prevKey = if(page ==1) null else page - 1,
+                nextKey = if(items.isNotEmpty()) page + 1 else null
+            )
+        } catch (e: Exception){
+            LoadResult.Error(e)
+        }
+    }
+
+}
+//Second - Paging Repo && VM
+class PagingViewModel: ViewModel(){
+    val pager = Pager ( PagingConfig(pageSize = 20) ){
+        ItemPagingSource()
+    }.flow.cachedIn(viewModelScope)
+}
+
+//Finally - Usage in Compose
+@Composable
+fun PaginatedList(){
+    val viewModel: PagingViewModel  = viewModel()
+    val lazyPagingItems = viewModel.pager.collectAsLazyPagingItems()
+
+    LazyColumn {
+        items(lazyPagingItems.itemCount){ index ->
+            lazyPagingItems[index]?.let {item ->
+                Text(text = item, modifier = Modifier.padding(16.dp))
+            }
+        }
+        item {
+            if(lazyPagingItems.loadState.append is LoadState.Loading){
+                CircularProgressIndicator(modifier = Modifier.fillMaxSize())
+            }
+        }
+    }
+
+}
+
+
+//13.1 - Pagination // manual pagination
+@Composable
+fun SimplePagination(){
+
+    var items by remember { mutableStateOf((1..20).toList()) }
+    var isLoading by remember {mutableStateOf(false)}
+    LazyColumn {
+        items(items){item ->
+            Text(
+                text = "Item $item",
+                modifier = Modifier.padding(16.dp)
+            )
+        }
+        item {
+            if(isLoading){
+                CircularProgressIndicator(modifier = Modifier.fillMaxSize())
+            }
+        }
+    }
+    LaunchedEffect(items){
+        if(items.last() % 20 == 0){
+            isLoading = true
+            delay(2000) //Network delay
+            items = items + (items.last() + 1..items.last() + 20) //New data fetched
+            isLoading = false
+
+        }
+    }
+}
+
+
+
+
+
 
 //12.6 - Multi layer parallax scroll// Adjusting speed of different layer with modifiers
 //In General: Parallax effect can be done by manipulating Modifier.offset() or Modifier.graphicsLayer()
